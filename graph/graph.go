@@ -79,6 +79,22 @@ func (g *DirectedGraph) AddNode(n *Node) {
 	g.Nodes = append(g.Nodes, n)
 }
 
+// RemoveNode removes n from the graph, as well as any edges attached to it.
+// If the node is not in the graph it is a no-op.
+func (g *DirectedGraph) RemoveNode(n graph.Node) {
+	if !g.HasNode(n) {
+		return
+	}
+
+	for _, e := range n.EdgeStart {
+		g.RemoveDirectedEdge(e)
+	}
+
+	for _, e := range n.EdgeEnd {
+		g.RemoveDirectedEdge(e)
+	}
+}
+
 // AddDirectedEdge adds directed edge e to the graph
 func (g *DirectedGraph) AddDirectedEdge(e *Edge) {
 	from, to := e.From, e.To
@@ -99,6 +115,29 @@ func (g *DirectedGraph) AddDirectedEdge(e *Edge) {
 
 	g.Nodes[e.From.ID].EdgeStart = append(g.Nodes[e.From.ID].EdgeStart, e)
 	g.Nodes[e.To.ID].EdgeEnd = append(g.Nodes[e.To.ID].EdgeEnd, e)
+}
+
+// RemoveEdge removes e from the graph, leaving the terminal nodes.
+// If the edge does not exist, it is a no-op.
+func (g *DirectedGraph) RemoveDirectedEdge(e graph.Edge) {
+	from, to := e.From, e.To
+	if !g.HasNode(from) || !g.HasNode(to) {
+		return
+	}
+
+	for i, n := range from.EdgeStart {
+		if n == to {
+			from.EdgeStart = append(from.EdgeStart[:i], from.EdgeStart[i:]...)
+			break
+		}
+	}
+
+	for i, n := range to.EdgeEnd {
+		if n == from {
+			to.EdgeEnd = append(to.EdgeEnd[:i], to.EdgeEnd[i:]...)
+			break
+		}
+	}
 }
 
 // Weight returns weight of directed edge from u to v
